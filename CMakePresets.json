@@ -1,0 +1,14 @@
+{
+    "version": 8,
+    "configurePresets": [
+        {
+            "name": "default",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": {
+                    "type": "PATH",
+                    "value": "C:/Users/Andreas/source/repos/vcpkg/scripts/buildsystems/vcpkg.cmake"
+                }
+            }
+        }
+    ]
+}
