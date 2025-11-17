@@ -29,10 +29,17 @@ uint32_t ScrewsKinematicsSolver::joint_count() const
     return m_screws.size();
 }
 
-//TASK: Implement fk_solve using screws.
 Eigen::Matrix4d ScrewsKinematicsSolver::fk_solve(const Eigen::VectorXd& joint_positions)
 {
-    return Eigen::Matrix4d::Identity();
+    // Equation (4.14) on page 140, MR 3rd print 2019
+    Eigen::Matrix4d product = Eigen::Matrix4d::Identity();
+
+    for (size_t i = 0; i < joint_positions.size(); i++)
+    {
+        product *= utility::matrix_exponential(m_screws[i], joint_positions[i]);
+    }
+
+    return product * m_m;
 }
 
 Eigen::VectorXd ScrewsKinematicsSolver::ik_solve(const Eigen::Matrix4d& t_sd, const Eigen::VectorXd& j0)
