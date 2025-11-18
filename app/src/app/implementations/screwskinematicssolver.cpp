@@ -58,21 +58,62 @@ std::pair<Eigen::Matrix4d, std::vector<Eigen::VectorXd>> ScrewsKinematicsSolver:
     return { m_m, m_screws };
 }
 
-//TASK: Implement body_chain(). You can obtain the variables to transform to body frame from space_chain().
 std::pair<Eigen::Matrix4d, std::vector<Eigen::VectorXd>> ScrewsKinematicsSolver::body_chain()
 {
-    // auto [m, screws] = space_chain();
-    return space_chain();
+    auto [m, screws] = space_chain();
+
+    // Below equation (4.16) on page 147, MR 3rd print 2019
+    int count = joint_count();
+    Eigen::MatrixXd adj_m = Eigen::MatrixXd::Identity(count, count);
+    adj_m = utility::adjoint_matrix(m.inverse());
+
+    std::vector<Eigen::VectorXd> b_screws;
+    for (Eigen::VectorXd s : screws) {
+        Eigen::VectorXd b = adj_m * s;
+        b_screws.push_back(b);
+    }
+
+    return { m, b_screws };
 }
 
-//TASK: Implement space_jacobian() using space_chain()
 Eigen::MatrixXd ScrewsKinematicsSolver::space_jacobian(const Eigen::VectorXd& current_joint_positions)
 {
-    return Eigen::MatrixXd::Identity(current_joint_positions.size(), current_joint_positions.size());
+    auto [m, screws] = space_chain();
+
+    // Equation (5.11) on page 178, MR 3rd print 2019
+    int count = current_joint_positions.size();
+    Eigen::Matrix4d t = Eigen::Matrix4d::Identity();
+    Eigen::MatrixXd j = Eigen::MatrixXd::Identity(count, count);
+    j.col(0) = screws[0];
+
+    for (size_t i = 1; i < count; i++) {
+        j.col(i) = utility::adjoint_matrix(t) * screws[i];
+        t = t * utility::matrix_exponential(
+            screws[i - 1].block<3, 1>(0, 0),
+            screws[i - 1].block<3, 1>(3, 0),
+            current_joint_positions[i - 1]);
+    }
+
+    return j;
 }
 
-//TASK: Implement body_jacobian() using body_chain()
 Eigen::MatrixXd ScrewsKinematicsSolver::body_jacobian(const Eigen::VectorXd& current_joint_positions)
 {
-    return Eigen::MatrixXd::Identity(current_joint_positions.size(), current_joint_positions.size());
+    auto [m, screws] = body_chain();
+
+    // Equation (5.18) on page 183, MR 3rd print 2019
+    int count = current_joint_positions.size();
+    Eigen::Matrix4d t = Eigen::Matrix4d::Identity();
+    Eigen::MatrixXd j = Eigen::MatrixXd::Identity(count, count);
+    j.col(count - 1) = screws[count - 1];
+
+    for (int i = count - 2; i >= 0; i--) {
+        t = t * utility::matrix_exponential(
+            -screws[i + 1].block<3, 1>(0, 0),
+            -screws[i + 1].block<3, 1>(3, 0),
+            current_joint_positions[i + 1]);
+        j.col(i) = utility::adjoint_matrix(t) * screws[i];
+    }
+
+    return j;
 }
