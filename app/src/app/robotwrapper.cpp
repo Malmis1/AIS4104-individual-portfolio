@@ -35,7 +35,7 @@ uint8_t RobotWrapper::joint_count() const
 //TASK: Implement the function to calculate the joint positions for the desired tool pose
 // a) Use m_tool_transform to calculate the flange pose required by m_solver.ik_solve()
 // b) Use the m_solver.ik_solve() overload with the solution selector lambda to choose the most desirable IK solution.
-Eigen::VectorXd RobotWrapper::ik_solve_pose(const Eigen::Matrix4d &eef_pose, const Eigen::VectorXd &j0) const
+Eigen::VectorXd RobotWrapper::ik_solve_pose(const Eigen::Matrix4d& eef_pose, const Eigen::VectorXd& j0) const
 {
     return joint_positions();
 }
@@ -43,7 +43,7 @@ Eigen::VectorXd RobotWrapper::ik_solve_pose(const Eigen::Matrix4d &eef_pose, con
 //TASK: Implement the function to calculate the joint positions for the desired flange pose
 // a) Use m_tool_transform to calculate the flange pose required by m_solver.ik_solve()
 // b) Use the m_solver.ik_solve() overload with the solution selector lambda to choose the most desirable IK solution.
-Eigen::VectorXd RobotWrapper::ik_solve_flange_pose(const Eigen::Matrix4d &flange_pose, const Eigen::VectorXd &j0) const
+Eigen::VectorXd RobotWrapper::ik_solve_flange_pose(const Eigen::Matrix4d& flange_pose, const Eigen::VectorXd& j0) const
 {
     return joint_positions();
 }
@@ -106,7 +106,7 @@ Eigen::VectorXd RobotWrapper::joint_positions() const
     return utility::to_eigen_vectord(m_robot->jointValues());
 }
 
-void RobotWrapper::set_joint_positions(const Eigen::VectorXd &joint_positions)
+void RobotWrapper::set_joint_positions(const Eigen::VectorXd& joint_positions)
 {
     m_robot->setJointValues(utility::to_std_vectorf(joint_positions));
 }
