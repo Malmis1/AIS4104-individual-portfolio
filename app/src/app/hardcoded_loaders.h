@@ -74,10 +74,35 @@ namespace AIS4104 {
         return std::make_shared<TracIkKinematicsSolver>(c, limits);
     }
 
-    //TASK: Kinematic modeling of the KUKA KR 6 r900 sixx using screws.
     inline std::shared_ptr<ScrewsKinematicsSolver> hardcoded_kr6r_screw_solver()
     {
-        return hardcoded_ur3e_screw_solver();
+        double h1 = 0.200;
+        double h2 = 0.200;
+        double l1 = 0.025;
+        double l2 = 0.490;
+        double l3 = 0.080;
+        double l4 = 0.420;
+
+        Eigen::Matrix4d m = utility::transformation_matrix(utility::rotate_y(-90.0 * utility::deg_to_rad) * utility::rotate_x(-90.0 * utility::deg_to_rad) * utility::rotate_z(-90.0 * utility::deg_to_rad),
+            Eigen::Vector3d{ l1 + l2 + l3 + l4, 0, h1 + h2 });
+
+        Simulation::JointLimits limits
+        {
+            utility::to_eigen_vectord(std::vector<double>{180.0, 180.0, 180.0, 360.0, 360.0, 360.0})* utility::deg_to_rad,
+            utility::to_eigen_vectord(std::vector<double>{90.0, 90.0, 90.0, 180.0, 180.0, 180.0})* utility::deg_to_rad,
+            utility::to_eigen_vectord(std::vector<double>{-360.0, -360.0, -360.0, -360.0, -360.0, -360.0})* utility::deg_to_rad,
+            utility::to_eigen_vectord(std::vector<double>{360.0, 360.0, 360.0, 360.0, 360.0, 360.0})* utility::deg_to_rad
+        };
+
+        return std::make_shared<ScrewsKinematicsSolver>(
+            m,
+            std::vector<Eigen::VectorXd>{
+            utility::screw_axis({ 0.0, 0.0, h1 }, { 0.0, 0.0, 1.0 }, 0.0),
+                utility::screw_axis({ l1, 0.0, h1 + h2 }, { 0.0, 1.0, 0.0 }, 0.0),
+                utility::screw_axis({ l2, 0.0, h1 + h2 }, { 0.0, 1.0, 0.0 }, 0.0),
+                utility::screw_axis({ l2 + l3 + l4, 0.0, h1 + h2 }, { 1.0, 0.0, 0.0 }, 0.0)
+        }, limits
+        );
     }
 
     //TASK: Kinematic modeling of the KUKA KR 6 r900 sixx using Trac IK and KDL.
