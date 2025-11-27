@@ -47,10 +47,39 @@ Eigen::VectorXd ScrewsKinematicsSolver::ik_solve(const Eigen::Matrix4d& t_sd, co
     return ik_solve(t_sd, j0, [&](const std::vector<Eigen::VectorXd>&) { return 0u; });
 }
 
-//TASK: Implement ik_solve using screws.
 Eigen::VectorXd ScrewsKinematicsSolver::ik_solve(const Eigen::Matrix4d& t_sd, const Eigen::VectorXd& j0, const std::function<uint32_t(const std::vector<Eigen::VectorXd>&)>& solution_selector)
 {
-    return j0;
+    // Inverse kinematics algorithm at bottom of page 228 and continuing on page 229, MR 3rd print 2019
+    size_t iter = 0;
+    size_t max_iter = 1000;
+
+    Eigen::VectorXd joint_positions(6);
+    Eigen::VectorXd previous_joint_positions(6);
+    joint_positions = j0;
+    previous_joint_positions = j0;
+
+    Eigen::VectorXd result = joint_positions;
+    bool crit = true;
+
+    while ((iter < max_iter) && crit) {
+        Eigen::Matrix4d t_sb_inv = fk_solve(previous_joint_positions).inverse();
+        // Need to use static_case to specify which matrix_logarithm to use
+        std::pair<Eigen::VectorXd, double> vb = utility::matrix_logarithm(static_cast<const Eigen::Matrix4d&>(t_sb_inv * t_sd));
+        crit = (vb.first.block<3, 1>(0, 0).norm() > m_we) || (vb.first.block<3, 1>(3, 0).norm() > m_ve);
+
+        Eigen::MatrixXd j_pinv(6, 6);
+        // Built-in Eigen function for pseudoinverse
+        j_pinv = body_jacobian(previous_joint_positions).completeOrthogonalDecomposition().pseudoInverse();
+
+        Eigen::VectorXd temp_joint_positions = joint_positions;
+        joint_positions = previous_joint_positions + j_pinv * vb.first;
+        previous_joint_positions = temp_joint_positions;
+
+        result = joint_positions;
+        iter++;
+    }
+
+    return result;
 }
 
 std::pair<Eigen::Matrix4d, std::vector<Eigen::VectorXd>> ScrewsKinematicsSolver::space_chain()
