@@ -40,12 +40,9 @@ Eigen::VectorXd RobotWrapper::ik_solve_pose(const Eigen::Matrix4d& eef_pose, con
     return joint_positions();
 }
 
-//TASK: Implement the function to calculate the joint positions for the desired flange pose
-// a) Use m_tool_transform to calculate the flange pose required by m_solver.ik_solve()
-// b) Use the m_solver.ik_solve() overload with the solution selector lambda to choose the most desirable IK solution.
 Eigen::VectorXd RobotWrapper::ik_solve_flange_pose(const Eigen::Matrix4d& flange_pose, const Eigen::VectorXd& j0) const
 {
-    return joint_positions();
+    return m_solver->ik_solve(flange_pose, j0);
 }
 
 Eigen::Matrix4d RobotWrapper::tool_transform() const
@@ -78,22 +75,21 @@ Eigen::Vector3d RobotWrapper::current_orientation_zyx() const
     return Eigen::Vector3d::Zero();
 }
 
-//TASK: Calculate the pose of the end effector using forward kinematics and m_solver.
 Eigen::Matrix4d RobotWrapper::current_flange_pose() const
 {
-    return Eigen::Matrix4d::Identity();
+    return m_solver->fk_solve(joint_positions());
 }
 
-//TASK: Based on the flange pose, return its linear position.
 Eigen::Vector3d RobotWrapper::current_flange_position() const
 {
-    return Eigen::Vector3d::Zero();
+    Eigen::Matrix4d tf = m_solver->fk_solve(joint_positions());
+    return tf.block<3, 1>(0, 3);
 }
 
-//TASK: Based on the flange pose, return its orientation in the Euler ZYX representation.
 Eigen::Vector3d RobotWrapper::current_flange_orientation_zyx() const
 {
-    return Eigen::Vector3d::Zero();
+    Eigen::Matrix4d tf = m_solver->fk_solve(joint_positions());
+    return utility::euler_zyx_from_rotation_matrix(tf.block<3, 3>(0, 0));
 }
 
 const Simulation::JointLimits& RobotWrapper::joint_limits() const
