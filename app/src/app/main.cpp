@@ -46,12 +46,13 @@ void render_scene_with_default_tool(std::shared_ptr<AIS4104::RobotWrapper> robot
     scene.render();
 }
 
-int main(int, char **)
+int main(int, char**)
 {
     std::filesystem::path kr6_path = "urdf/urdf_files/ros-industrial/kuka_kr6_support/urdf/kr6r900sixx.urdf";
     std::filesystem::path ur3e_path = "urdf/urdf_files/matlab/ur_e_description/urdf/universalUR3e.urdf";
 
     auto solver = AIS4104::hardcoded_kr6r_tracik_solver();
+    //auto solver = AIS4104::hardcoded_kr6r_screw_solver();
     auto robot = std::make_shared<AIS4104::RobotWrapper>(AIS4104::load_threepp_robot(kr6_path), solver);
     auto control_iface = AIS4104::Simulation::Factory::create_control_interface(robot, solver, std::make_shared<AIS4104::MotionPlannerImpl>(*robot));
     robot->set_joint_positions(AIS4104::initial_robot_configuration());
